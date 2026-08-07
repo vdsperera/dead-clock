@@ -805,6 +805,14 @@ function registerHesitation(p){
   const dot = document.getElementById('dot'+state.tick);
   if(dot) dot.className='dot miss';
   Array.from(choicesRow.children).forEach(b=>b.disabled=true);
+
+  // Shake clock and flash screen red when player freezes/times out
+  shakeEl.classList.remove('shakeAnim');
+  void shakeEl.offsetWidth;
+  shakeEl.classList.add('shakeAnim');
+  document.body.classList.remove('flash');
+  void document.body.offsetWidth;
+  document.body.classList.add('flash');
 }
 
 function advanceClock(){
@@ -812,13 +820,6 @@ function advanceClock(){
   const deg = state.tick * 30;
   hand.style.transform = `rotate(${deg}deg)`;
   timeReadout.textContent = String(state.tick*5).padStart(2,'0');
-
-  shakeEl.classList.remove('shakeAnim');
-  void shakeEl.offsetWidth;
-  shakeEl.classList.add('shakeAnim');
-  document.body.classList.remove('flash');
-  void document.body.offsetWidth;
-  document.body.classList.add('flash');
 
   for(let i=0;i<state.tick;i++){
     crackPaths[i].style.opacity = 0.15 + (state.tick/TOTAL_TICKS)*0.55;
