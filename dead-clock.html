@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DEAD CLOCK</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cutive+Mono&family=IM+Fell+English+SC&family=EB+Garamond:ital@0;1&display=swap');
+
+:root{
+  --bg:#0b0a08;
+  --face:#161310;
+  --brass:#a8875a;
+  --brass-dim:#5c4a32;
+  --blood:#7a2323;
+  --bone:#ded6c3;
+  --bone-dim:#8c8574;
+  --decay:#3f4a3f;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+
+html,body{
+  height:100%;
+  background:var(--bg);
+  color:var(--bone);
+  font-family:'EB Garamond', serif;
+  overflow:hidden;
+}
+
+body{
+  background-image:
+    radial-gradient(ellipse at center, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0) 60%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 3px);
+}
+
+#stage{
+  position:relative;
+  width:100%;
+  height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  text-align:center;
+  padding:24px;
+}
+
+.screen{
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  width:100%;
+  max-width:520px;
+}
+.screen.active{display:flex;}
+
+h1.title{
+  font-family:'IM Fell English SC', serif;
+  letter-spacing:0.35em;
+  font-size:2.6rem;
+  color:var(--bone);
+  text-shadow:0 0 18px rgba(122,35,35,0.5);
+  margin-bottom:6px;
+}
+
+.sub{
+  color:var(--bone-dim);
+  font-size:0.95rem;
+  letter-spacing:0.08em;
+  margin-bottom:28px;
+  line-height:1.6;
+  font-style:italic;
+}
+
+.btn{
+  background:transparent;
+  border:1px solid var(--brass-dim);
+  color:var(--bone);
+  font-family:'Cutive Mono', monospace;
+  letter-spacing:0.2em;
+  padding:14px 28px;
+  font-size:0.85rem;
+  cursor:pointer;
+  transition:all 0.25s ease;
+  position:relative;
+}
+
+.diffRow{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:10px;
+  margin-bottom:22px;
+}
+.diffBtn{
+  background:transparent;
+  border:1px solid rgba(255,255,255,0.1);
+  color:var(--bone-dim);
+  font-family:'Cutive Mono', monospace;
+  letter-spacing:0.12em;
+  padding:10px 14px;
+  font-size:0.68rem;
+  cursor:pointer;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+  transition:all 0.2s ease;
+}
+.diffBtn span{
+  font-size:0.6rem;
+  color:var(--bone-dim);
+  opacity:0.7;
+}
+.diffBtn:hover{border-color:var(--brass-dim);color:var(--bone);}
+.diffBtn.selected{
+  border-color:var(--brass);
+  color:var(--brass);
+  box-shadow:0 0 10px rgba(168,135,90,0.15);
+}
+.diffBtn.selected span{color:var(--brass);opacity:0.8;}
+.btn:hover{
+  border-color:var(--brass);
+  background:rgba(168,135,90,0.08);
+  box-shadow:0 0 14px rgba(168,135,90,0.15);
+}
+.btn:active{transform:scale(0.97);}
+
+/* CLOCK */
+#clockWrap{
+  position:relative;
+  width:280px;
+  height:280px;
+  margin-bottom:34px;
+}
+#shake{width:100%;height:100%;}
+
+svg{width:100%;height:100%;overflow:visible;}
+
+.rim{fill:var(--face);stroke:var(--brass-dim);stroke-width:2;}
+.tick{stroke:var(--brass-dim);stroke-width:2;}
+.tick.big{stroke:var(--brass);stroke-width:3;}
+.hand{
+  stroke:var(--blood);
+  stroke-width:4;
+  stroke-linecap:round;
+  filter:drop-shadow(0 0 6px rgba(122,35,35,0.65));
+  transform-origin:140px 140px;
+  transition:transform 0.32s cubic-bezier(.2,1.3,.4,1);
+}
+.hub{fill:var(--brass);}
+.crack{
+  stroke:rgba(222,214,195,0.55);
+  stroke-width:1;
+  fill:none;
+  opacity:0;
+  transition:opacity 0.4s ease;
+}
+
+#timeReadout{
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-60%);
+  font-family:'Cutive Mono', monospace;
+  font-size:2.1rem;
+  color:var(--bone);
+  text-shadow:0 0 10px rgba(122,35,35,0.6);
+  letter-spacing:0.05em;
+  pointer-events:none;
+}
+#timeUnit{
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,60%);
+  font-family:'Cutive Mono', monospace;
+  font-size:0.65rem;
+  letter-spacing:0.3em;
+  color:var(--bone-dim);
+  pointer-events:none;
+}
+
+/* PROMPT */
+#promptText{
+  font-family:'IM Fell English SC', serif;
+  font-size:1.35rem;
+  color:var(--bone);
+  min-height:2.4em;
+  margin-bottom:18px;
+  letter-spacing:0.03em;
+}
+
+#timerBar{
+  width:220px;
+  height:3px;
+  background:rgba(255,255,255,0.08);
+  margin-bottom:22px;
+  position:relative;
+}
+#timerFill{
+  height:100%;
+  background:var(--blood);
+  width:100%;
+  transform-origin:left;
+}
+
+.choices{
+  display:flex;
+  gap:16px;
+  margin-bottom:26px;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+.choiceBtn{
+  background:linear-gradient(180deg, rgba(168,135,90,0.06), transparent);
+  border:1px solid var(--brass-dim);
+  color:var(--bone);
+  font-family:'Cutive Mono', monospace;
+  letter-spacing:0.12em;
+  padding:14px 20px;
+  font-size:0.8rem;
+  cursor:pointer;
+  min-width:140px;
+  transition:all 0.15s ease;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+}
+.choiceBtn:hover{border-color:var(--brass);background:rgba(168,135,90,0.14);}
+.choiceBtn:disabled{opacity:0.25;cursor:default;}
+
+.keyBadge{
+  font-family:'Cutive Mono', monospace;
+  font-size:0.65rem;
+  color:var(--brass);
+  background:rgba(168,135,90,0.15);
+  border:1px solid var(--brass-dim);
+  padding:2px 7px;
+  border-radius:3px;
+  letter-spacing:0.08em;
+  font-weight:bold;
+}
+
+.choiceBtn.boostChoice{
+  border-style:dashed;
+  border-color:rgba(168,135,90,0.4);
+}
+.choiceBtn.boostChoice:hover{
+  border-style:solid;
+  border-color:var(--brass);
+  background:rgba(168,135,90,0.12);
+}
+
+.configSection{
+  margin-bottom:22px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:12px;
+  width:100%;
+}
+.configLabel{
+  font-family:'Cutive Mono', monospace;
+  font-size:0.68rem;
+  letter-spacing:0.15em;
+  color:var(--bone-dim);
+  text-transform:uppercase;
+}
+.boostBtn{
+  background:transparent;
+  border:1px solid rgba(255,255,255,0.1);
+  color:var(--bone-dim);
+  font-family:'Cutive Mono', monospace;
+  letter-spacing:0.1em;
+  padding:8px 12px;
+  font-size:0.66rem;
+  cursor:pointer;
+  transition:all 0.2s ease;
+}
+.boostBtn:hover{border-color:var(--brass-dim);color:var(--bone);}
+.boostBtn.selected{
+  border-color:var(--brass);
+  color:var(--brass);
+  box-shadow:0 0 10px rgba(168,135,90,0.15);
+}
+
+/* TIME MATRIX REPORT CARD */
+#timeMatrixBox{
+  width:100%;
+  max-width:440px;
+  background:rgba(22,19,16,0.85);
+  border:1px solid var(--brass-dim);
+  padding:16px;
+  margin-bottom:22px;
+  border-radius:4px;
+  box-shadow:0 0 20px rgba(0,0,0,0.4);
+}
+.matrixTitle{
+  font-family:'IM Fell English SC', serif;
+  font-size:1.15rem;
+  letter-spacing:0.15em;
+  color:var(--brass);
+  margin-bottom:12px;
+  text-align:center;
+  border-bottom:1px dashed rgba(168,135,90,0.3);
+  padding-bottom:6px;
+}
+.matrixGrid{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:10px;
+  margin-bottom:12px;
+}
+.matrixStat{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+.matrixVal{
+  font-family:'Cutive Mono', monospace;
+  font-size:1.15rem;
+  color:var(--bone);
+  font-weight:bold;
+}
+.matrixLbl{
+  font-family:'Cutive Mono', monospace;
+  font-size:0.6rem;
+  color:var(--bone-dim);
+  letter-spacing:0.08em;
+  margin-top:2px;
+  text-align:center;
+}
+.matrixProfile{
+  font-family:'Cutive Mono', monospace;
+  font-size:0.72rem;
+  color:var(--bone-dim);
+  text-align:center;
+  line-height:1.4;
+  border-top:1px dashed rgba(255,255,255,0.08);
+  padding-top:8px;
+}
+.matrixProfile span{
+  color:var(--brass);
+  font-weight:bold;
+}
+
+.dots{
+  display:flex;
+  gap:7px;
+}
+.dot{
+  width:7px;height:7px;border-radius:50%;
+  background:rgba(255,255,255,0.12);
+  transition:background 0.3s ease;
+}
+.dot.hit{background:var(--brass);}
+.dot.miss{background:var(--blood);}
+
+/* END SCREEN */
+#endTitle{
+  font-family:'IM Fell English SC', serif;
+  font-size:2rem;
+  letter-spacing:0.15em;
+  margin-bottom:10px;
+  color:var(--bone);
+}
+#endVerdict{
+  font-style:italic;
+  color:var(--bone-dim);
+  margin-bottom:22px;
+  line-height:1.6;
+  font-size:1rem;
+}
+#scoreLine{
+  font-family:'Cutive Mono', monospace;
+  font-size:1.1rem;
+  color:var(--brass);
+  margin-bottom:8px;
+  letter-spacing:0.05em;
+}
+#sanityLine{
+  font-family:'Cutive Mono', monospace;
+  font-size:0.8rem;
+  color:var(--bone-dim);
+  margin-bottom:24px;
+  letter-spacing:0.05em;
+}
+#history{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:6px;
+  max-width:440px;
+  margin-bottom:30px;
+}
+
+#axisBars{
+  width:100%;
+  max-width:340px;
+  margin-bottom:26px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.axisRow{width:100%;}
+.axisTop{
+  display:flex;
+  justify-content:space-between;
+  font-family:'Cutive Mono', monospace;
+  font-size:0.66rem;
+  letter-spacing:0.1em;
+  margin-bottom:5px;
+}
+.axisName{color:var(--bone-dim);}
+.axisLabel{color:var(--brass);}
+.axisTrack{
+  width:100%;
+  height:4px;
+  background:rgba(255,255,255,0.08);
+}
+.axisFill{
+  height:100%;
+  background:var(--blood);
+  transition:width 0.5s ease;
+}
+.histItem{
+  font-family:'Cutive Mono', monospace;
+  font-size:0.65rem;
+  padding:5px 8px;
+  border:1px solid rgba(255,255,255,0.08);
+  color:var(--bone-dim);
+}
+.histItem.ok{color:var(--brass);border-color:rgba(168,135,90,0.3);}
+.histItem.bad{color:var(--blood);border-color:rgba(122,35,35,0.4);}
+
+.shakeAnim{animation:shk 0.32s ease;}
+@keyframes shk{
+  0%{transform:translate(0,0);}
+  20%{transform:translate(-2px,1px) rotate(-0.3deg);}
+  40%{transform:translate(2px,-1px) rotate(0.3deg);}
+  60%{transform:translate(-1px,1px);}
+  80%{transform:translate(1px,-1px);}
+  100%{transform:translate(0,0);}
+}
+
+.flash{animation:fl 0.25s ease;}
+@keyframes fl{
+  0%{background:rgba(122,35,35,0.18);}
+  100%{background:transparent;}
+}
+</style>
+</head>
+<body>
+
+<div id="stage">
+
+  <!-- TITLE -->
+  <div class="screen active" id="screenTitle">
+    <h1 class="title">DEAD CLOCK</h1>
+    <p class="sub">Twelve everyday questions. Nothing spooky in them —<br>
+    but you won't have time to give the answer you'd <em>like</em> to give.<br>
+    Just the one that's actually true.<br>
+    The clock doesn't wait for you to think of a better one.</p>
+    
+    <div class="configSection">
+      <div class="configLabel">DIFFICULTY TIMER</div>
+      <div class="diffRow" id="diffRow">
+        <button class="diffBtn" data-ms="8000">FROZEN<span>8s</span></button>
+        <button class="diffBtn selected" data-ms="5000">SLOW<span>5s</span></button>
+        <button class="diffBtn" data-ms="3200">CALM<span>3.2s</span></button>
+        <button class="diffBtn" data-ms="2200">UNEASY<span>2.2s</span></button>
+        <button class="diffBtn" data-ms="1000">DEAD<span>1.0s</span></button>
+      </div>
+      <div class="configLabel">DEFAULT EXTRA TIME BOOST (KEY [3])</div>
+      <div class="diffRow" id="boostRow">
+        <button class="boostBtn" data-sec="3">+3s</button>
+        <button class="boostBtn selected" data-sec="5">+5s (DEFAULT)</button>
+        <button class="boostBtn" data-sec="8">+8s</button>
+        <button class="boostBtn" data-sec="10">+10s</button>
+      </div>
+    </div>
+    <button class="btn" id="btnStart">WIND IT <span class="keyBadge">[ENTER]</span></button>
+  </div>
+
+  <!-- GAME -->
+  <div class="screen" id="screenGame">
+    <div id="clockWrap">
+      <div id="shake">
+        <svg viewBox="0 0 280 280">
+          <circle class="rim" cx="140" cy="140" r="118"/>
+          <g id="ticks"></g>
+          <g id="cracks"></g>
+          <line id="hand" class="hand" x1="140" y1="140" x2="140" y2="46"/>
+          <circle class="hub" cx="140" cy="140" r="6"/>
+        </svg>
+      </div>
+      <div id="timeReadout">00</div>
+      <div id="timeUnit">DEAD SECONDS</div>
+    </div>
+
+    <div id="promptText">&nbsp;</div>
+    <div id="timerBar"><div id="timerFill"></div></div>
+    <div class="choices" id="choicesRow"></div>
+    <div class="dots" id="dots"></div>
+  </div>
+
+  <!-- END -->
+  <div class="screen" id="screenEnd">
+    <h1 id="endTitle">THE CLOCK HAS STOPPED</h1>
+    <p id="endVerdict"></p>
+    <div id="scoreLine"></div>
+    <div id="sanityLine"></div>
+    <div id="timeMatrixBox"></div>
+    <div id="axisBars"></div>
+    <div id="history"></div>
+    <button class="btn" id="btnAgain">WIND IT AGAIN <span class="keyBadge">[ENTER]</span></button>
+  </div>
+
+</div>
+
+<script>
+const PROMPTS = [
+  {text:"A friend cooked for you tonight. It wasn't good. They ask what you think.", a:"TELL THEM, GENTLY", b:"SAY IT WAS GREAT", axis:"HONESTY", deltaA:1, deltaB:-1},
+  {text:"You're lost. The GPS says left. Your gut says right.", a:"GO WITH YOUR GUT", b:"TRUST THE GPS", axis:"CONTROL", deltaA:1, deltaB:-1},
+  {text:"You find $20 on the sidewalk. No one's around.", a:"SPEND IT TODAY", b:"SAVE IT", axis:"PRESENCE", deltaA:1, deltaB:-1},
+  {text:"Someone cuts in front of you in a long line.", a:"SAY SOMETHING", b:"LET IT GO", axis:"CONNECTION", deltaA:1, deltaB:-1},
+  {text:"You already sent the email. Now you spot the typo.", a:"SEND A CORRECTION", b:"HOPE NO ONE NOTICES", axis:"HONESTY", deltaA:1, deltaB:-1},
+  {text:"You always order the same thing here. Tonight there's a new dish.", a:"TRY THE NEW ONE", b:"ORDER THE USUAL", axis:"CONTROL", deltaA:1, deltaB:-1},
+  {text:"You're scrolling old photos. It's 1am and you have work tomorrow.", a:"KEEP SCROLLING", b:"CLOSE IT, SLEEP", axis:"PRESENCE", deltaA:1, deltaB:-1},
+  {text:"You're exhausted. A friend texts asking you to come out tonight.", a:"CANCEL, REST", b:"GO ANYWAY", axis:"CONNECTION", deltaA:1, deltaB:-1},
+  {text:"Mid-argument, you realize you're actually the one who's wrong.", a:"ADMIT IT NOW", b:"WAIT FOR THEM TO SAY IT FIRST", axis:"HONESTY", deltaA:1, deltaB:-1},
+  {text:"Big decision, deadline in an hour. No time to sleep on it.", a:"GO WITH YOUR FIRST INSTINCT", b:"MAKE A QUICK PROS/CONS LIST", axis:"CONTROL", deltaA:1, deltaB:-1},
+  {text:"Everyone's out tonight. You're comfortable at home, but you know you'll hear about it tomorrow.", a:"STAY IN", b:"GO, YOU DON'T WANT TO MISS IT", axis:"PRESENCE", deltaA:1, deltaB:-1},
+  {text:"Someone who hurt you a while back just texted 'hey, thinking of you.'", a:"IGNORE IT", b:"REPLY", axis:"CONNECTION", deltaA:1, deltaB:-1},
+];
+
+const TOTAL_TICKS = 12;
+let TICK_MS = 5000;
+let EXTRA_TIME_SEC = 5;
+
+document.querySelectorAll('.diffBtn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.diffBtn').forEach(b=>b.classList.remove('selected'));
+    btn.classList.add('selected');
+    TICK_MS = parseInt(btn.dataset.ms, 10);
+  });
+});
+
+document.querySelectorAll('.boostBtn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.boostBtn').forEach(b=>b.classList.remove('selected'));
+    btn.classList.add('selected');
+    EXTRA_TIME_SEC = parseInt(btn.dataset.sec, 10);
+  });
+});
+
+let state = {
+  tick:0,
+  score:0,
+  hesitations:0,
+  axis:{HONESTY:0, CONTROL:0, PRESENCE:0, CONNECTION:0},
+  history:[],
+  timerHandle:null,
+  windowStart:0,
+  currentWindowMs:5000,
+  answered:false,
+  extraTimeCount:0,
+  totalExtraSec:0,
+  currentPromptBoosted:false,
+  gameStartTime:0,
+  promptStartTime:0
+};
+
+const screenTitle = document.getElementById('screenTitle');
+const screenGame = document.getElementById('screenGame');
+const screenEnd = document.getElementById('screenEnd');
+const hand = document.getElementById('hand');
+const timeReadout = document.getElementById('timeReadout');
+const promptText = document.getElementById('promptText');
+const choicesRow = document.getElementById('choicesRow');
+const timerFill = document.getElementById('timerFill');
+const dotsEl = document.getElementById('dots');
+const cracksG = document.getElementById('cracks');
+const ticksG = document.getElementById('ticks');
+const shakeEl = document.getElementById('shake');
+
+function showScreen(el){
+  [screenTitle, screenGame, screenEnd].forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// build 12 tick marks
+for(let i=0;i<12;i++){
+  const angle = (i*30) * Math.PI/180;
+  const x1 = 140 + Math.sin(angle)*100;
+  const y1 = 140 - Math.cos(angle)*100;
+  const x2 = 140 + Math.sin(angle)*114;
+  const y2 = 140 - Math.cos(angle)*114;
+  const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1',x1); line.setAttribute('y1',y1);
+  line.setAttribute('x2',x2); line.setAttribute('y2',y2);
+  line.setAttribute('class', i%3===0 ? 'tick big' : 'tick');
+  ticksG.appendChild(line);
+}
+
+// build 12 crack lines (revealed progressively, jagged from center)
+const crackPaths = [];
+for(let i=0;i<12;i++){
+  const angle = (i*30 + 15) * Math.PI/180;
+  const midx = 140 + Math.sin(angle)*60 + (Math.random()*20-10);
+  const midy = 140 - Math.cos(angle)*60 + (Math.random()*20-10);
+  const endx = 140 + Math.sin(angle)*108 + (Math.random()*14-7);
+  const endy = 140 - Math.cos(angle)*108 + (Math.random()*14-7);
+  const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+  p.setAttribute('d', `M140,140 L${midx},${midy} L${endx},${endy}`);
+  p.setAttribute('class','crack');
+  cracksG.appendChild(p);
+  crackPaths.push(p);
+}
+
+for(let i=0;i<TOTAL_TICKS;i++){
+  const d = document.createElement('div');
+  d.className='dot';
+  d.id='dot'+i;
+  dotsEl.appendChild(d);
+}
+
+document.getElementById('btnStart').addEventListener('click', startGame);
+document.getElementById('btnAgain').addEventListener('click', startGame);
+
+// Global Keyboard Numpad / Digit Controller
+window.addEventListener('keydown', (e) => {
+  if (screenGame.classList.contains('active')) {
+    if (e.key === '1' || e.code === 'Digit1' || e.code === 'Numpad1') {
+      const btnA = document.getElementById('btnChoiceA');
+      if (btnA && !btnA.disabled) btnA.click();
+    } else if (e.key === '2' || e.code === 'Digit2' || e.code === 'Numpad2') {
+      const btnB = document.getElementById('btnChoiceB');
+      if (btnB && !btnB.disabled) btnB.click();
+    } else if (e.key === '3' || e.code === 'Digit3' || e.code === 'Numpad3') {
+      const btnBoost = document.getElementById('btnChoiceBoost');
+      if (btnBoost && !btnBoost.disabled) btnBoost.click();
+    }
+  } else if (screenTitle.classList.contains('active')) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      startGame();
+    }
+  } else if (screenEnd.classList.contains('active')) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      startGame();
+    }
+  }
+});
+
+function startGame(){
+  state = {
+    tick:0,
+    score:0,
+    hesitations:0,
+    axis:{HONESTY:0, CONTROL:0, PRESENCE:0, CONNECTION:0},
+    history:[],
+    timerHandle:null,
+    windowStart:0,
+    currentWindowMs:TICK_MS,
+    answered:false,
+    extraTimeCount:0,
+    totalExtraSec:0,
+    currentPromptBoosted:false,
+    gameStartTime:performance.now(),
+    promptStartTime:0
+  };
+  hand.style.transform = 'rotate(0deg)';
+  timeReadout.textContent = '00';
+  crackPaths.forEach(p=>p.style.opacity=0);
+  dotsEl.querySelectorAll('.dot').forEach(d=>{d.className='dot';});
+  showScreen(screenGame);
+  runTick();
+}
+
+function runTick(){
+  if(state.tick >= TOTAL_TICKS){
+    endGame();
+    return;
+  }
+  state.answered = false;
+  state.currentPromptBoosted = false;
+  state.currentWindowMs = TICK_MS;
+  const p = PROMPTS[state.tick];
+  promptText.textContent = p.text;
+  choicesRow.innerHTML = '';
+
+  const btnA = document.createElement('button');
+  btnA.className = 'choiceBtn';
+  btnA.id = 'btnChoiceA';
+  btnA.innerHTML = `<span class="keyBadge">[1]</span><span>${p.a}</span>`;
+
+  const btnB = document.createElement('button');
+  btnB.className = 'choiceBtn';
+  btnB.id = 'btnChoiceB';
+  btnB.innerHTML = `<span class="keyBadge">[2]</span><span>${p.b}</span>`;
+
+  const btnBoost = document.createElement('button');
+  btnBoost.className = 'choiceBtn boostChoice';
+  btnBoost.id = 'btnChoiceBoost';
+  btnBoost.innerHTML = `<span class="keyBadge">[3]</span><span>+${EXTRA_TIME_SEC}s TAKE MORE TIME</span>`;
+
+  btnA.addEventListener('click', ()=>choose('A', p));
+  btnB.addEventListener('click', ()=>choose('B', p));
+  btnBoost.addEventListener('click', ()=>applyTimeBoost());
+
+  choicesRow.appendChild(btnA);
+  choicesRow.appendChild(btnB);
+  choicesRow.appendChild(btnBoost);
+
+  state.promptStartTime = performance.now();
+  startTimerWindow(TICK_MS);
+}
+
+function startTimerWindow(durationMs){
+  if (state.timerHandle) clearTimeout(state.timerHandle);
+
+  timerFill.style.transition = 'none';
+  timerFill.style.transform = 'scaleX(1)';
+  void timerFill.offsetWidth;
+  timerFill.style.transition = `transform ${durationMs}ms linear`;
+  timerFill.style.transform = 'scaleX(0)';
+
+  state.windowStart = performance.now();
+  state.currentWindowMs = durationMs;
+
+  const currentPrompt = PROMPTS[state.tick];
+
+  state.timerHandle = setTimeout(()=>{
+    if(!state.answered){
+      registerHesitation(currentPrompt);
+    }
+    advanceClock();
+  }, durationMs);
+}
+
+function applyTimeBoost(){
+  if(state.answered || state.currentPromptBoosted) return;
+  state.currentPromptBoosted = true;
+  state.extraTimeCount += 1;
+  state.totalExtraSec += EXTRA_TIME_SEC;
+
+  const elapsedInWindow = performance.now() - state.windowStart;
+  const remainingInWindow = Math.max(0, state.currentWindowMs - elapsedInWindow);
+  const boostMs = EXTRA_TIME_SEC * 1000;
+  const newRemaining = remainingInWindow + boostMs;
+
+  const btnBoost = document.getElementById('btnChoiceBoost');
+  if(btnBoost){
+    btnBoost.disabled = true;
+    btnBoost.innerHTML = `<span class="keyBadge">[3]</span><span>+${EXTRA_TIME_SEC}s ADDED</span>`;
+  }
+
+  startTimerWindow(newRemaining);
+}
+
+function choose(letter, p){
+  if(state.answered) return;
+  state.answered = true;
+  if(state.timerHandle) clearTimeout(state.timerHandle);
+
+  const totalPromptElapsed = performance.now() - state.promptStartTime;
+  const elapsedInWindow = performance.now() - state.windowStart;
+  const speedFrac = Math.max(0, Math.min(1, 1 - elapsedInWindow/state.currentWindowMs));
+  const pts = 5 + Math.round(speedFrac*10);
+  state.score += pts;
+  const delta = letter==='A' ? p.deltaA : p.deltaB;
+  state.axis[p.axis] += delta;
+
+  state.history.push({
+    label: (letter==='A' ? p.a : p.b),
+    ok: true,
+    timeSec: (totalPromptElapsed / 1000).toFixed(1),
+    boosted: state.currentPromptBoosted
+  });
+
+  const dot = document.getElementById('dot'+state.tick);
+  if(dot) dot.className='dot hit';
+  Array.from(choicesRow.children).forEach(b=>b.disabled=true);
+}
+
+function registerHesitation(p){
+  state.score -= 5;
+  state.hesitations += 1;
+  const totalPromptElapsed = performance.now() - state.promptStartTime;
+  state.history.push({
+    label: '(froze — no answer)',
+    ok: false,
+    timeSec: (totalPromptElapsed / 1000).toFixed(1),
+    boosted: state.currentPromptBoosted
+  });
+  const dot = document.getElementById('dot'+state.tick);
+  if(dot) dot.className='dot miss';
+  Array.from(choicesRow.children).forEach(b=>b.disabled=true);
+}
+
+function advanceClock(){
+  state.tick += 1;
+  const deg = state.tick * 30;
+  hand.style.transform = `rotate(${deg}deg)`;
+  timeReadout.textContent = String(state.tick*5).padStart(2,'0');
+
+  shakeEl.classList.remove('shakeAnim');
+  void shakeEl.offsetWidth;
+  shakeEl.classList.add('shakeAnim');
+  document.body.classList.remove('flash');
+  void document.body.offsetWidth;
+  document.body.classList.add('flash');
+
+  for(let i=0;i<state.tick;i++){
+    crackPaths[i].style.opacity = 0.15 + (state.tick/TOTAL_TICKS)*0.55;
+  }
+
+  setTimeout(runTick, 60);
+}
+
+const AXIS_INFO = {
+  HONESTY: {
+    pos:{label:"Truth-teller", desc:"you'll say the uncomfortable true thing before you'll say the easy false one."},
+    neg:{label:"Smooths it over", desc:"you'll protect the moment, even at the cost of the full truth."}
+  },
+  CONTROL: {
+    pos:{label:"Leads with instinct", desc:"under pressure, your gut answers before your reasoning catches up."},
+    neg:{label:"Leads with the system", desc:"you reach for the plan, the map, the process — even with no time to check it."},
+  },
+  PRESENCE: {
+    pos:{label:"Lives in the moment", desc:"you spend the twenty, you stay in the scroll, you chase the night out."},
+    neg:{label:"Plays the long game", desc:"you save it, close the tab, stay in — the future gets a vote."},
+  },
+  CONNECTION: {
+    pos:{label:"Protects the relationship", desc:"you'll absorb a little friction to keep the peace or the person."},
+    neg:{label:"Protects yourself first", desc:"you speak up, cancel plans, keep the door shut — your own line comes first."},
+  }
+};
+
+function endGame(){
+  showScreen(screenEnd);
+  const maxScore = TOTAL_TICKS*15;
+  const gameDurationSec = ((performance.now() - state.gameStartTime) / 1000).toFixed(1);
+  const avgResponseTimeSec = (gameDurationSec / TOTAL_TICKS).toFixed(1);
+
+  // find strongest axis (by magnitude)
+  const axisKeys = Object.keys(state.axis);
+  let strongest = axisKeys[0];
+  axisKeys.forEach(k=>{ if(Math.abs(state.axis[k]) > Math.abs(state.axis[strongest])) strongest = k; });
+  const strongVal = state.axis[strongest];
+  const strongInfo = strongVal >= 0 ? AXIS_INFO[strongest].pos : AXIS_INFO[strongest].neg;
+
+  let title, verdict;
+  if(state.hesitations >= 5){
+    title = "YOU NEEDED MORE TIME THAN YOU GOT";
+    verdict = `You froze on ${state.hesitations} of ${TOTAL_TICKS} — more than most. That's not indecision, that's you not trusting the fast answer. Worth noticing what you do when there's no time to overthink it.`;
+  } else if(Math.abs(strongVal) >= 2){
+    title = strongInfo.label.toUpperCase();
+    verdict = `Under pressure, ${strongInfo.desc} That showed up more than once. Whether that's who you want to be is a different question.`;
+  } else {
+    title = "RIGHT DOWN THE MIDDLE";
+    verdict = "No strong lean either way. Either you're genuinely balanced under pressure, or the clock never quite caught you off guard.";
+  }
+
+  document.getElementById('endTitle').textContent = title;
+  document.getElementById('endVerdict').textContent = verdict;
+  document.getElementById('scoreLine').textContent = `SCORE: ${state.score} / ${maxScore}`;
+  document.getElementById('sanityLine').textContent = state.hesitations > 0
+    ? `FROZE ON ${state.hesitations} OF ${TOTAL_TICKS}`
+    : `ANSWERED ALL ${TOTAL_TICKS} IN TIME`;
+
+  // Render Time Matrix Dashboard
+  let velocityTitle = "UNWAVERING INSTINCT";
+  let velocityDesc = "Decisive pace with zero extra time borrowed.";
+  if (state.extraTimeCount === 0 && parseFloat(avgResponseTimeSec) < 2.0) {
+    velocityTitle = "LIGHTNING INSTINCT";
+    velocityDesc = "Extremely rapid decision-making with zero extra time requested.";
+  } else if (state.extraTimeCount > 0 && state.extraTimeCount <= 3) {
+    velocityTitle = "CALCULATED BORROWER";
+    velocityDesc = "Strategically took extra seconds on select tough prompts.";
+  } else if (state.extraTimeCount > 3) {
+    velocityTitle = "TIME THIEF";
+    velocityDesc = "Frequently relied on extra time boosts to deliberate under pressure.";
+  }
+
+  const matrixEl = document.getElementById('timeMatrixBox');
+  matrixEl.innerHTML = `
+    <div class="matrixTitle">TIME MATRIX REPORT</div>
+    <div class="matrixGrid">
+      <div class="matrixStat">
+        <div class="matrixVal">${gameDurationSec}s</div>
+        <div class="matrixLbl">TOTAL TIME</div>
+      </div>
+      <div class="matrixStat">
+        <div class="matrixVal">${avgResponseTimeSec}s</div>
+        <div class="matrixLbl">AVG / PROMPT</div>
+      </div>
+      <div class="matrixStat">
+        <div class="matrixVal">+${state.totalExtraSec}s</div>
+        <div class="matrixLbl">EXTRA BORROWED</div>
+      </div>
+    </div>
+    <div class="matrixProfile">
+      Pace Profile: <span>${velocityTitle}</span> — ${velocityDesc} (${state.extraTimeCount} boost${state.extraTimeCount===1?'':'s'} used)
+    </div>
+  `;
+
+  // axis breakdown bars
+  const axisEl = document.getElementById('axisBars');
+  axisEl.innerHTML = '';
+  axisKeys.forEach(k=>{
+    const val = state.axis[k];
+    const info = val >= 0 ? AXIS_INFO[k].pos : AXIS_INFO[k].neg;
+    const magnitude = Math.min(3, Math.abs(val));
+    const row = document.createElement('div');
+    row.className = 'axisRow';
+    row.innerHTML = `
+      <div class="axisTop"><span class="axisName">${k}</span><span class="axisLabel">${val===0?'—':info.label}</span></div>
+      <div class="axisTrack"><div class="axisFill" style="width:${(magnitude/3)*100}%"></div></div>
+    `;
+    axisEl.appendChild(row);
+  });
+
+  const histEl = document.getElementById('history');
+  histEl.innerHTML='';
+  state.history.forEach((h,i)=>{
+    const el = document.createElement('div');
+    el.className = 'histItem ' + (h.ok ? 'ok':'bad');
+    const boostTag = h.boosted ? ` [+${EXTRA_TIME_SEC}s]` : '';
+    el.textContent = `Q${i+1} · ${h.label} (${h.timeSec}s${boostTag})`;
+    histEl.appendChild(el);
+  });
+}
+</script>
+</body>
+</html>
