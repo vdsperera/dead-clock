@@ -782,7 +782,14 @@ function choose(letter, p){
 
   const dot = document.getElementById('dot'+state.tick);
   if(dot) dot.className='dot hit';
+  const selectedBtn = letter === 'A' ? document.getElementById('btnChoiceA') : document.getElementById('btnChoiceB');
+  if(selectedBtn) {
+    selectedBtn.style.borderColor = 'var(--brass)';
+    selectedBtn.style.background = 'rgba(168,135,90,0.2)';
+  }
   Array.from(choicesRow.children).forEach(b=>b.disabled=true);
+
+  setTimeout(advanceClock, 350);
 }
 
 function registerHesitation(p){
