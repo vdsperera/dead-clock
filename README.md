@@ -13,7 +13,7 @@ You are presented with 12 slice-of-life scenarios and two choices. The catch? Th
 * **Atmospheric UI:** A gritty, dark-mode aesthetic with custom animations, SVG clock graphics, and immersive fonts.
 
 ## 🚀 How to Play
-1. Open `dead-clock.html` in your web browser.
+1. Open `index.html` in your web browser.
 2. Select your difficulty timer.
 3. Press `[ENTER]` to wind the clock.
 4. Use your mouse or keyboard (`[1]` for choice A, `[2]` for choice B, `[3]` for extra time) to answer before the clock shatters.
@@ -25,5 +25,4 @@ You are presented with 12 slice-of-life scenarios and two choices. The catch? Th
 * Inline SVG for dynamic clock graphics
 
 ## 💡 Play It
-*(If you are hosting this on GitHub Pages, you can put a link here!)*
-[Play Dead Clock here](https://your-username.github.io/dead-clock)
+👉 **[Play Dead Clock Live Here](https://vdsperera.github.io/dead-clock/)**
