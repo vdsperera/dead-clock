@@ -518,23 +518,10 @@ svg{width:100%;height:100%;overflow:visible;}
 
 </div>
 
+<script src="prompts.js"></script>
 <script>
-const PROMPTS = [
-  {text:"A friend cooked for you tonight. It wasn't good. They ask what you think.", a:"TELL THEM, GENTLY", b:"SAY IT WAS GREAT", axis:"HONESTY", deltaA:1, deltaB:-1},
-  {text:"You're lost. The GPS says left. Your gut says right.", a:"GO WITH YOUR GUT", b:"TRUST THE GPS", axis:"CONTROL", deltaA:1, deltaB:-1},
-  {text:"You find $20 on the sidewalk. No one's around.", a:"SPEND IT TODAY", b:"SAVE IT", axis:"PRESENCE", deltaA:1, deltaB:-1},
-  {text:"Someone cuts in front of you in a long line.", a:"SAY SOMETHING", b:"LET IT GO", axis:"CONNECTION", deltaA:1, deltaB:-1},
-  {text:"You already sent the email. Now you spot the typo.", a:"SEND A CORRECTION", b:"HOPE NO ONE NOTICES", axis:"HONESTY", deltaA:1, deltaB:-1},
-  {text:"You always order the same thing here. Tonight there's a new dish.", a:"TRY THE NEW ONE", b:"ORDER THE USUAL", axis:"CONTROL", deltaA:1, deltaB:-1},
-  {text:"You're scrolling old photos. It's 1am and you have work tomorrow.", a:"KEEP SCROLLING", b:"CLOSE IT, SLEEP", axis:"PRESENCE", deltaA:1, deltaB:-1},
-  {text:"You're exhausted. A friend texts asking you to come out tonight.", a:"CANCEL, REST", b:"GO ANYWAY", axis:"CONNECTION", deltaA:1, deltaB:-1},
-  {text:"Mid-argument, you realize you're actually the one who's wrong.", a:"ADMIT IT NOW", b:"WAIT FOR THEM TO SAY IT FIRST", axis:"HONESTY", deltaA:1, deltaB:-1},
-  {text:"Big decision, deadline in an hour. No time to sleep on it.", a:"GO WITH YOUR FIRST INSTINCT", b:"MAKE A QUICK PROS/CONS LIST", axis:"CONTROL", deltaA:1, deltaB:-1},
-  {text:"Everyone's out tonight. You're comfortable at home, but you know you'll hear about it tomorrow.", a:"STAY IN", b:"GO, YOU DON'T WANT TO MISS IT", axis:"PRESENCE", deltaA:1, deltaB:-1},
-  {text:"Someone who hurt you a while back just texted 'hey, thinking of you.'", a:"IGNORE IT", b:"REPLY", axis:"CONNECTION", deltaA:1, deltaB:-1},
-];
 
-const TOTAL_TICKS = 12;
+const TOTAL_TICKS = PROMPTS.length;
 let TICK_MS = 5000;
 let EXTRA_TIME_SEC = 5;
 
@@ -589,9 +576,9 @@ function showScreen(el){
   el.classList.add('active');
 }
 
-// build 12 tick marks
-for(let i=0;i<12;i++){
-  const angle = (i*30) * Math.PI/180;
+// build tick marks
+for(let i=0;i<TOTAL_TICKS;i++){
+  const angle = (i*(360/TOTAL_TICKS)) * Math.PI/180;
   const x1 = 140 + Math.sin(angle)*100;
   const y1 = 140 - Math.cos(angle)*100;
   const x2 = 140 + Math.sin(angle)*114;
@@ -599,14 +586,14 @@ for(let i=0;i<12;i++){
   const line = document.createElementNS('http://www.w3.org/2000/svg','line');
   line.setAttribute('x1',x1); line.setAttribute('y1',y1);
   line.setAttribute('x2',x2); line.setAttribute('y2',y2);
-  line.setAttribute('class', i%3===0 ? 'tick big' : 'tick');
+  line.setAttribute('class', (TOTAL_TICKS % 4 === 0 ? i%(TOTAL_TICKS/4)===0 : (TOTAL_TICKS % 3 === 0 ? i%(TOTAL_TICKS/3)===0 : i===0)) ? 'tick big' : 'tick');
   ticksG.appendChild(line);
 }
 
-// build 12 crack lines (revealed progressively, jagged from center)
+// build crack lines (revealed progressively, jagged from center)
 const crackPaths = [];
-for(let i=0;i<12;i++){
-  const angle = (i*30 + 15) * Math.PI/180;
+for(let i=0;i<TOTAL_TICKS;i++){
+  const angle = (i*(360/TOTAL_TICKS) + (180/TOTAL_TICKS)) * Math.PI/180;
   const midx = 140 + Math.sin(angle)*60 + (Math.random()*20-10);
   const midy = 140 - Math.cos(angle)*60 + (Math.random()*20-10);
   const endx = 140 + Math.sin(angle)*108 + (Math.random()*14-7);
